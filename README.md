@@ -2,7 +2,7 @@
 
 # Desafio Módulo 3 - Backend
 
-## Como entregar?
+## Como entregar:
 
 - [ ] Faça o fork desse repositório para o seu GitHub
 - [ ] Clone o seu repositório em sua máquina
