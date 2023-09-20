@@ -1,7 +1,8 @@
 const bcrypt = require('bcrypt')
-const pool = require('../conexao')
+const pool = require('../database/conexao')
 const jwt = require('jsonwebtoken')
 const senhaJwt = require('../senhacriptografadajwt')
+
 
 const cadastrarUsuario = async (req, res) => {
 	const { nome, email, senha } = req.body
@@ -31,24 +32,25 @@ const cadastrarUsuario = async (req, res) => {
 
 }
 
-
+//rever aula 14/09 e corrigir o token
 const login = async (req, res) => {
 	const { email, senha } = req.body
 	
 	try {
 		const { rows, rowCount } = await pool.query(
-			'select * from usuarios where email = $1',
+			'select * from usuarios where email = $1', //testar no beekeeper antes
 			[email]
 		)
 	
 		if (rowCount === 0) {
-			return res.status(400).json({ mensagem: 'Email ou senha inválida' })
+			return res.status(400).json({ mensagem: 'Email ou senha inválida' }) //Não dizer onde está o erro deixa o código mais seguro
 		}
 	
 		const { senha: senhaUsuario, ...usuario } = rows[0]
 	
-		const senhaCorreta = await bcrypt.compare(senha, senhaUsuario)
-	
+		const senhaCorreta = await bcrypt.compare(senha, senhaUsuario) //verificar a senha válida
+
+	    //compara a senha que ta no banco com a senha do usuarios
 		if (!senhaCorreta) {
 			return res.status(400).json({ mensagem: 'Email ou senha incorreta' })
 		}
@@ -66,15 +68,9 @@ const login = async (req, res) => {
     }
 }
 
+
 const detalharUsuario = async (req, res) => {
-    const tokenUsuario =  req.headers.authorization;
-
-	const tokenAutorizado = tokenUsuario.slice(7)
-
 	try {
-		const {id: tokenExiste} = jwt.verify(tokenAutorizado, SECRET_KEY).id;
-		
-		
 		const queryBanco = 'select * from usuarios where email = $1';
 		const { rows, rowCount } = await pool.query(queryBanco, [tokenExiste]);
 
