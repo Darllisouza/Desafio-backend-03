@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 const senhaJwt = require('../senhacriptografadajwt')
 
 //Cadastro de um novo usuário
+//obs: está faltando as validações que vem da requisição e verificar status code
 const cadastrarUsuario = async (req, res) => {
 	const { nome, email, senha } = req.body
 
@@ -11,7 +12,7 @@ const cadastrarUsuario = async (req, res) => {
 		const emailExiste = await pool.query('select * from usuarios where email = $1',[email])
 
 		if (emailExiste.rowCount > 0) {
-			return res.status(400).json({ mensagem: 'Email já existe!' })
+			return res.status(400).json({ mensagem: 'Já existe usuário cadastrado com o e-mail informado!' })
 		}
 
 		const senhaCriptografada = await bcrypt.hash(senha, 10)
@@ -33,6 +34,7 @@ const cadastrarUsuario = async (req, res) => {
 }
 
 //login do usuário
+//obs: está faltando as validações que vem da requisição e verificar status code
 const login = async (req, res) => {
 	const { email, senha } = req.body
 	
@@ -69,24 +71,70 @@ const login = async (req, res) => {
     }
 }
 
-
+//rota de exibir informações do usuario através do seu token
 const detalharUsuario = async (req, res) => {
-	const { id } = req.usuario;
+	return res.json(req.usuario)
+}
 
+
+//rota de atualizar informacoes do usuario
+//obs: está faltando as validações que vem da requisição e verificar status code
+const atualizarUsuario = async (req, res) => {
+
+	const { nome, email, senha} = req.body
+	
 	try {
+      
+		//validar se existe outro usuario com esse email
+		if( email !== req.usuario.email){
+			const { rowCount } = await pool.query(
+				'select id from usuarios where email = $1',
+				[email]
+			);
+
+			//nao permitir que use o email de outro usuario, porem esta permitindo que subscreva em cima do proprio email
+			if (rowCount > 0) {
+				return res.status(404).json({ mensagem: 'O e-mail informado já está sendo utilizado por outro usuário.'});
+			}
+		}
+
+        //se usuario alterar a senha, criptografar novamente
+		let senhaHash = req.usuario.senha
+		if(senha){
+			senhaHash = await bcrypt.hash(senha, 10)
+		}
+
+       //esta parte atualiza informações do usuario nessa ordem de acordo com o banco de dados
+		await pool.query(
+			'update usuarios set nome = $2, email = $3, senha = $4 where id = $1',
+			[req.usuario.id, nome, email, senhaHash]
+		);
+
+		return res.status(200).json({ mensagem: "usuario atualizado!"})
 
 	} catch (error) {
-	  console.log(error.message);
-
+		return res.status(500).json('Erro interno do servidor')
 	}
-  };
+}
 
+
+//lista categorias cadastradas no banco de dados
+const listarCategorias = async (req, res) => {
+	try {
+		const { rows } = await pool.query('select * from categorias')
+
+		return res.json(rows)
+	} catch (error) {
+		return res.status(500).json('Erro interno do servidor')
+	}
+}
 
 
 module.exports =
 {
  cadastrarUsuario,
  login,
- detalharUsuario
- 
+ detalharUsuario,
+ atualizarUsuario,
+ listarCategorias
 }
