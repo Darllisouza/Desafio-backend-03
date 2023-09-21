@@ -3,7 +3,7 @@ const pool = require('../database/conexao')
 const jwt = require('jsonwebtoken')
 const senhaJwt = require('../senhacriptografadajwt')
 
-
+//Cadastro de um novo usuário
 const cadastrarUsuario = async (req, res) => {
 	const { nome, email, senha } = req.body
 
@@ -32,29 +32,64 @@ const cadastrarUsuario = async (req, res) => {
 
 }
 
-
-/*
-const detalharUsuario = async (req, res) => {
+//login do usuário
+const login = async (req, res) => {
+	const { email, senha } = req.body
+	
 	try {
-		const queryBanco = 'select * from usuarios where email = $1';
-		const { rows, rowCount } = await pool.query(queryBanco, [tokenExiste]);
-
-        if (rowCount === 0) {
-			return res.status(400).json({ mensagem: 'Usuario nao encontrado!'})
+		const { rows, rowCount } = await pool.query(
+			'select * from usuarios where email = $1', //testar no beekeeper antes
+			[email]
+		)
+	
+		if (rowCount === 0) {
+			return res.status(401).json({ mensagem: 'Email ou senha inválida' }) //Não dizer onde está o erro deixa o código mais seguro
 		}
+	
+		const { senha: senhaUsuario, ...usuario } = rows[0]
+	
+		const senhaCorreta = await bcrypt.compare(senha, senhaUsuario) //verificar a senha válida
 
-		const usuarioEncontrado = rows[0];
-		return res.status(200).json(usuarioEncontrado);
+	    //compara a senha que ta no banco com a senha do usuarios
+		if (!senhaCorreta) {
+			return res.status(401).json({ mensagem: 'Email ou senha incorreta' })
+		}
+	
+		const token = jwt.sign({ id: usuario.id }, senhaJwt, { expiresIn: '10h' })
+
+	
+		return res.json({
+			usuario,
+			token,
+
+		})
+		
+	} catch (error) {
+		return res.status(500).json({ mensagem: 'Erro interno do servidor' })
+    }
+}
+
+
+const detalharUsuario = async (req, res) => {
+	const { id } = req.usuario;
+	try {
+		const query = 'select * from usuarios where email = $1';
+		const params = [id];
+
+        const usuario = await pool.query(query, params);
+		return res.status(200).send(usuario["rows"]);
 
 	} catch (error){
-		return res.status(400).json({ mensagem: 'Token inválido!'})
+		console.error(error.message);
 	}
 }
-*/
+
 
 
 module.exports =
 {
- cadastrarUsuario
+ cadastrarUsuario,
+ login,
+ detalharUsuario
  
 }

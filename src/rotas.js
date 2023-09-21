@@ -22,5 +22,3 @@ rotas.delete('/transacao/:id', validarToken,);//excluir uma das suas transaçõe
 rotas.get('/transacao/extrato', validarToken,); //obter o extrato de todas as suas transações cadastradas
 
 module.exports = rotas;
-
-
