@@ -5,7 +5,7 @@ const senhaJwt = require('../senhacriptografadajwt')
 
 const validarToken = (request, response, next) => {
   try {
-    const token = request.headers.validarToken; //pegar o token
+    const token = request.headers.authorization; //pegar o token
 
     const decodedToken = jwt.verify(token, senhaJwt); //pegar as informações que estão dentro do token
 

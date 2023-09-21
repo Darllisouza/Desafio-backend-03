@@ -72,17 +72,14 @@ const login = async (req, res) => {
 
 const detalharUsuario = async (req, res) => {
 	const { id } = req.usuario;
+
 	try {
-		const query = 'select * from usuarios where email = $1';
-		const params = [id];
 
-        const usuario = await pool.query(query, params);
-		return res.status(200).send(usuario["rows"]);
+	} catch (error) {
+	  console.log(error.message);
 
-	} catch (error){
-		console.error(error.message);
 	}
-}
+  };
 
 
 
