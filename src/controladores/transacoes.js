@@ -1,17 +1,37 @@
-/*
-todas as linhas estão comentadas. A ideia é que que isso facilite teu/nosso
-entendimento linha por linha que eu fiz, tlgd? 
-Só me lembra de apagar as explicações antes de mandar pra correção.
-
-quando a gente for refatorar, acredito que essas validações ficam melhor em outro arquivo.
-Deixei aqui pra n ficar maluca na hora de fazer kkk
-*/
-
 const pool = require('../database/conexao')
 
-//rota montada, mas ta dando erro no servidor e o sono não me deixa verificar onde o erro ta
+//rota cadastrar transacao e associar a um usuario
 const cadastrarTransacao = async (req, res) => {
+	
+    const { tipo, descricao, valor, data, categoria_id} = req.body;
+	const usuario_id = req.usuario.id;
 
+
+
+	try{
+        //procurar categoria na base de dados
+		const categoriaInformada = await pool.query('select * from categorias where id= $1',
+	        [categoria_id])
+
+		if (categoriaInformada.rowCount === 0){
+			return res.status(400).json({ mensagem: "Categoria não existe." });
+
+		}
+        //inserir na tabela de transacoes
+		const query = await pool.query (
+		    `insert into transacoes (tipo, descricao, valor, data, categoria_id, usuario_id)
+		    values ($1, $2, $3, $4, $5, $6 ) returning * `,
+			[tipo, descricao, valor, data, categoria_id, usuario_id]
+	        
+		);
+
+		const usuarioTransacao = query.rows[0];
+
+	     return res.status(201).json(usuarioTransacao)
+
+	}catch(error){
+         return res.status(500).json({ mensagem: "Erro interno no servidor."})
+	}
 };
 
 
@@ -92,17 +112,45 @@ const detalharTransacao = async (req, res) => {
 
 
 //rota atualizar transacao associadas a um usuario
-const atualizarTransacao = (req, res) => {
+const atualizarTransacao = async (req, res) => {
+	const {id} = req.params; //recebendo id da transacao no parametro da rota
+    const { tipo, descricao, valor, data, categoria_id} = req.body;//dados passados na requisicao
+	const usuario_id = req.usuario.id;//id do usuario já logado
+
+	try {
+        //consultar se essa transacao existe no banco de dados
+		const transacaoExiste = await pool.query(
+			'select * from transacoes where id = $1 and usuario_id = $2',
+			[id, usuario_id]
+		)
+
+		if(transacaoExiste.rows.length === 0){
+			return res.status(404).json({ mensagem: "transacao nao encontrada."})
+		}
+
+		//se existir, será atualizada na mesma ordem
+		const query = await pool.query(
+			'update transacoes set tipo = $1, descricao = $2, valor = $3, data = $4, categoria_id = $5 where id = $6 and usuario_id = $7 returning *',
+			[tipo, descricao, valor, data, categoria_id, id, usuario_id]
+		)
+
+		const transacaoUpdate = query.rows[0];
+		return res.status(201).json(transacaoUpdate)
+
+	}catch(error){
+        return res.status(500).json({ mensagem: "Erro no nosso servidor." });
+
+	}
 
 };
 
 //excluir atualizar transacao associadas a um usuario
-const excluirTransacao = (req, res) => {
+const excluirTransacao = async (req, res) => {
 
 };
 
 //rota obter extrato
-const extratoTransacao = (req, res) => {
+const extratoTransacao = async (req, res) => {
 
 };
 
