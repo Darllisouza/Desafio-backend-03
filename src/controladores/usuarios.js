@@ -4,9 +4,13 @@ const jwt = require('jsonwebtoken')
 const senhaJwt = require('../senhacriptografadajwt')
 
 //Cadastro de um novo usuário
-//obs: está faltando as validações que vem da requisição e verificar status code
+//obs: verificar status code
 const cadastrarUsuario = async (req, res) => {
 	const { nome, email, senha } = req.body
+
+	if (!nome || !email || !senha) {
+		return res.status(400).json({ mensagem: "Todos os campos são obrigatórios" }); 
+	}
 
 	try {
 		const emailExiste = await pool.query('select * from usuarios where email = $1',[email])
@@ -34,9 +38,13 @@ const cadastrarUsuario = async (req, res) => {
 }
 
 //login do usuário
-//obs: está faltando as validações que vem da requisição e verificar status code
+//verificar status code
 const login = async (req, res) => {
 	const { email, senha } = req.body
+
+	if (!email || !senha) {
+		return res.status(400).json({ mensagem: "Todos os campos são obrigatórios" }); 
+	}
 	
 	try {
 		const { rows, rowCount } = await pool.query(
@@ -78,11 +86,14 @@ const detalharUsuario = async (req, res) => {
 
 
 //rota de atualizar informacoes do usuario
-//obs: está faltando as validações que vem da requisição e verificar status code
+//obs: verificar status code
 const atualizarUsuario = async (req, res) => {
-
 	const { nome, email, senha} = req.body
-	
+
+	if (!nome || !email || !senha) {
+		return res.status(400).json({ mensagem: "Todos os campos são obrigatórios" });
+	}
+
 	try {
       
 		//validar se existe outro usuario com esse email
