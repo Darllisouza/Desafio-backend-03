@@ -1,5 +1,5 @@
 const express = require("express");
-const validarToken = require("./middlewares/validarSenha.js");
+const validarToken = require("./middlewares/validarToken.js");
 
 //importando endpoints usuario
 const {

@@ -3,7 +3,7 @@ const pool = require('../database/conexao')
 const jwt = require('jsonwebtoken')
 const senhaJwt = require('../senhacriptografadajwt')
 
-//Cadastro de um novo usuário
+//Cadastro de um novo usuário - ok
 //obs: verificar status code
 const cadastrarUsuario = async (req, res) => {
 	const { nome, email, senha } = req.body
@@ -37,7 +37,7 @@ const cadastrarUsuario = async (req, res) => {
 
 }
 
-//login do usuário
+//login do usuário - ok
 //verificar status code
 const login = async (req, res) => {
 	const { email, senha } = req.body
@@ -85,7 +85,7 @@ const detalharUsuario = async (req, res) => {
 }
 
 
-//rota de atualizar informacoes do usuario
+//rota de atualizar informacoes do usuario - ok
 //obs: verificar status code
 const atualizarUsuario = async (req, res) => {
 	const { nome, email, senha} = req.body
@@ -129,7 +129,7 @@ const atualizarUsuario = async (req, res) => {
 }
 
 
-//lista categorias cadastradas no banco de dados
+//lista categorias cadastradas no banco de dados - ok
 const listarCategorias = async (req, res) => {
 	try {
 		const { rows } = await pool.query('select * from categorias')

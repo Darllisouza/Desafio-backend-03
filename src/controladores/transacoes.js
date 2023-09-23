@@ -1,11 +1,10 @@
 const pool = require('../database/conexao')
 
-//rota cadastrar transacao e associar a um usuario
+//rota cadastrar transacao e associar a um usuario - ok
 const cadastrarTransacao = async (req, res) => {
 	
     const { tipo, descricao, valor, data, categoria_id} = req.body;
 	const usuario_id = req.usuario.id;
-
 
 
 	try{
@@ -111,7 +110,7 @@ const detalharTransacao = async (req, res) => {
 };
 
 
-//rota atualizar transacao associadas a um usuario
+//rota atualizar transacao associadas a um usuario - ok
 const atualizarTransacao = async (req, res) => {
 	const {id} = req.params; //recebendo id da transacao no parametro da rota
     const { tipo, descricao, valor, data, categoria_id} = req.body;//dados passados na requisicao
@@ -144,16 +143,64 @@ const atualizarTransacao = async (req, res) => {
 
 };
 
-//excluir atualizar transacao associadas a um usuario
+//excluir atualizar transacao associadas a um usuario - ok
 const excluirTransacao = async (req, res) => {
+    const userId = req.usuario.id;
+    const transacaoId = req.params.id;
+    try {
+        const query = `
+        DELETE FROM transacoes 
+        WHERE id = $1 
+        AND usuario_id = $2`;
 
+        const params = [transacaoId , userId ];
+        const result = await pool.query(query, params);
+
+        // Verifica se nenhum registro foi afetado pela consulta.
+        if (result.rowCount === 0) {
+            return res.status(404).json({ mensagem: 'Transação não encontrada.' });
+        }
+        return res.status(204).json();
+    } catch (error) {
+
+        console.error('Erro interno do servidor:', error);
+        return res.status(500).json({ mensagem: 'Erro no nosso servidor.' });
+    }
 };
 
-//rota obter extrato
+//rota obter extrato - ok
 const extratoTransacao = async (req, res) => {
+    // Extrai o ID do usuário do objeto req.usuario
+    const { id } = req.usuario;
 
+    try {
+        // Consulta SQL para calcular a soma das transações de entrada e saída
+        const query = `
+            SELECT
+                COALESCE(SUM(CASE WHEN tipo = 'entrada' THEN valor ELSE 0 END), 0) AS entrada,
+                COALESCE(SUM(CASE WHEN tipo = 'saida' THEN valor ELSE 0 END), 0) AS saida
+            FROM transacoes
+            WHERE usuario_id = $1
+        `;
+
+        // Parâmetros para a consulta SQL, incluindo o ID do usuário
+        const params = [id];
+
+        // Executa a consulta SQL usando o pool de conexões do banco de dados
+        const { rows } = await pool.query(query, params);
+
+        // Extrai os valores do resultado da consulta para criar o objeto de extrato
+        const extrato = {
+            entrada: Number(rows[0].entrada), // Soma das transações de entrada
+            saida: Number(rows[0].saida),     // Soma das transações de saída
+        };
+
+        return res.status(200).json(extrato);
+        
+    } catch (error) {
+        return res.status(500).json({ mensagem: '"Erro no nosso servidor."' });
+    }
 };
-
 
 
 module.exports = 

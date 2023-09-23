@@ -18,16 +18,15 @@ CREATE TABLE usuarios (
 -- Cria a tabela "transacoes"
 CREATE TABLE transacoes (
    id SERIAL PRIMARY KEY,
+   tipo VARCHAR(20),
    descricao VARCHAR(255),
    valor NUMERIC(10, 2),
    data DATE,
    categoria_id INT,
    usuario_id INT,
-   tipo VARCHAR(20),
    FOREIGN KEY (categoria_id) REFERENCES categorias (id),
    FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
 );
-
 
 --Inserção das categorias
 INSERT INTO categorias (descricao) VALUES
