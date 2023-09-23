@@ -38,7 +38,7 @@ INSERT INTO categorias (descricao) VALUES
 ('Educação'),
 ('Família'),
 ('Lazer'),
-('Animais de estimação'),
+('Pets'), --01
 ('Presentes'),
 ('Roupas'),
 ('Saúde'),
