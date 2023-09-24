@@ -2,20 +2,31 @@ const pool = require('../database/conexao')
 
 //rota cadastrar transacao e associar a um usuario - ok
 const cadastrarTransacao = async (req, res) => {
-	
+
     const { tipo, descricao, valor, data, categoria_id} = req.body;
 	const usuario_id = req.usuario.id;
-
-
+    
 	try{
+       
         //procurar categoria na base de dados
 		const categoriaInformada = await pool.query('select * from categorias where id= $1',
 	        [categoria_id])
 
+        //validar se categoria existe na base de dados
 		if (categoriaInformada.rowCount === 0){
-			return res.status(400).json({ mensagem: "Categoria não existe." });
+			return res.status(400).json({ mensagem: "Categoria informada não existe." });
 
 		}
+
+        //validar campos passados no body
+        if(!tipo || !descricao || !valor || !data || !categoria_id ){
+            return res.status(400).json({ mensagem: "Todos os campos são obrigatórios!"})
+        }
+
+        if (tipo !== "entrada" && tipo !== "saida"){
+            return res.status(400).json({ mensagem: "O tipo de transação deve ser 'entrada' ou 'saída'." })
+        }
+
         //inserir na tabela de transacoes
 		const query = await pool.query (
 		    `insert into transacoes (tipo, descricao, valor, data, categoria_id, usuario_id)
@@ -26,7 +37,7 @@ const cadastrarTransacao = async (req, res) => {
 
 		const usuarioTransacao = query.rows[0];
 
-	     return res.status(201).json(usuarioTransacao)
+	    return res.status(201).json(usuarioTransacao)
 
 	}catch(error){
          return res.status(500).json({ mensagem: "Erro interno no servidor."})
@@ -126,6 +137,22 @@ const atualizarTransacao = async (req, res) => {
 		if(transacaoExiste.rows.length === 0){
 			return res.status(404).json({ mensagem: "transacao nao encontrada."})
 		}
+        
+        if(!tipo || !descricao || !valor || !data || !categoria_id ){
+            return res.status(400).json({ mensagem: "Todos os campos são obrigatórios!"})
+        }
+
+        if (tipo !== "entrada" && tipo !== "saida"){
+            return res.status(400).json({ mensagem: "O tipo de transação deve ser 'entrada' ou 'saída'." })
+        }
+        //procurar categoria na base de dados
+		const categoriaInformada = await pool.query('select * from categorias where id= $1',
+        [categoria_id])
+
+        //validar se categoria existe na base de dados
+        if (categoriaInformada.rowCount === 0){
+           return res.status(400).json({ mensagem: "Categoria informada não existe." });
+        }
 
 		//se existir, será atualizada na mesma ordem
 		const query = await pool.query(
@@ -170,7 +197,15 @@ const excluirTransacao = async (req, res) => {
 
 //rota obter extrato - ok
 const extratoTransacao = async (req, res) => {
-    // Extrai o ID do usuário do objeto req.usuario
+
+//requisito obrigatorio:
+//Em caso de não existir transações do tipo entrada cadastradas para o usuário logado, 
+//o valor retornado no corpo (body) da resposta deverá ser 0.
+//Em caso de não existir transações do tipo saida cadastradas para o usuário logado, 
+//o valor retornado no corpo (body) da resposta deverá ser 0.
+    
+
+// Extrai o ID do usuário do objeto req.usuario
     const { id } = req.usuario;
 
     try {
